@@ -61,9 +61,7 @@ async function loadProducts() {
                 <i data-lucide="alert-circle" class="w-16 h-16 text-terracotta mx-auto mb-4"></i>
                 <h3 class="text-xl font-bold text-gray-800 mb-2">Erreur de chargement</h3>
                 <p class="text-gray-600">Impossible de charger les produits. Veuillez réessayer.</p>
-                <button onclick="location.reload()" class="mt-4 bg-terracotta text-white px-6 py-2 rounded-lg">
-                    Recharger la page
-                </button>
+                <button onclick="location.reload()" class="mt-4 bg-terracotta text-white px-6 py-2 rounded-lg">Recharger la page</button>
             </div>
         `;
         lucide.createIcons();
@@ -129,9 +127,7 @@ function showErrorState() {
             <i data-lucide="alert-triangle" class="w-16 h-16 mx-auto mb-4"></i>
             <h2 class="text-2xl font-bold mb-2">Oups ! Un problème est survenu</h2>
             <p class="mb-4">L'application n'a pas pu démarrer correctement.</p>
-            <button onclick="location.reload()" class="bg-white text-terracotta px-6 py-2 rounded-lg font-bold">
-                Réessayer
-            </button>
+            <button onclick="location.reload()" class="bg-white text-terracotta px-6 py-2 rounded-lg font-bold">Réessayer</button>
         </div>
     `;
     lucide.createIcons();
@@ -146,8 +142,8 @@ function cleanImageUrl(url) {
 
 // Rendering
 function renderProducts() {
-    const filtered = currentFilter === 'all' 
-        ? products 
+    const filtered = currentFilter === 'all'
+        ? products
         : products.filter(p => p.category === currentFilter);
     
     if (filtered.length === 0) {
@@ -163,35 +159,36 @@ function renderProducts() {
     
     productsGrid.innerHTML = filtered.map(product => {
         const imageUrl = cleanImageUrl(product.image);
-        const originText = product.origin ? `<i data-lucide="map-pin" class="w-3 h-3"></i> ${product.origin}<span class="mx-2">•</span>` : '';
+        const originText = product.origin ? `<i data-lucide="map-pin" class="w-3 h-3"></i> ${product.origin} <span class="mx-2">•</span>` : '';
         
         return `
-        <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 flex flex-col h-full" data-category="${product.category}">
-            <div class="relative h-64 overflow-hidden bg-gray-100">
-                <img src="${imageUrl}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" loading="lazy" onerror="this.src='https://static.photos/food/640x360/1'">
-                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-bold text-deep-green shadow">
-                    ${product.price} DHS
+            <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 flex flex-col h-full" data-category="${product.category}">
+                <div class="relative h-64 overflow-hidden bg-gray-100">
+                    <img src="${imageUrl}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" loading="lazy" onerror="this.src='https://static.photos/food/640x360/1'">
+                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-bold text-deep-green shadow">
+                        ${product.price} DHS
+                    </div>
+                    <div class="absolute top-4 left-4 bg-terracotta text-white px-3 py-1 rounded-full text-xs font-medium shadow">
+                        ${product.category}
+                    </div>
                 </div>
-                <div class="absolute top-4 left-4 bg-terracotta text-white px-3 py-1 rounded-full text-xs font-medium shadow">
-                    ${product.category}
+                <div class="p-6 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-serif text-xl font-bold text-deep-green leading-tight">${product.name}</h3>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                        ${originText}
+                        <i data-lucide="scale" class="w-3 h-3"></i> ${product.weight || 'N/A'}
+                    </p>
+                    <p class="text-gray-600 text-sm mb-4 flex-1 line-clamp-3">${product.description_fr || product.description || ''}</p>
+                    <button onclick="addToCart(${product.id})" class="w-full bg-terracotta hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 group">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:animate-bounce"></i>
+                        Ajouter au panier
+                    </button>
                 </div>
             </div>
-            <div class="p-6 flex-1 flex flex-col">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-serif text-xl font-bold text-deep-green leading-tight">${product.name}</h3>
-                </div>
-                <p class="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                    ${originText}
-                    <i data-lucide="scale" class="w-3 h-3"></i> ${product.weight || 'N/A'}
-                </p>
-                <p class="text-gray-600 text-sm mb-4 flex-1 line-clamp-3">${product.description_fr || product.description || ''}</p>
-                <button onclick="addToCart(${product.id})" class="w-full bg-terracotta hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 group">
-                    <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:animate-bounce"></i>
-                    Ajouter au panier
-                </button>
-            </div>
-        </div>
-    `}).join('');
+        `;
+    }).join('');
     
     lucide.createIcons();
 }
@@ -250,8 +247,8 @@ function saveCart() {
 function calculateTotals() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const isInternational = document.getElementById('internationalShipping')?.checked || false;
-    
     let shipping = 0;
+    
     if (isInternational) {
         shipping = 250;
     } else if (subtotal <= 499 && subtotal > 0) {
@@ -408,7 +405,6 @@ function closeWhatsAppModal() {
 
 function handleOrderSubmit(e) {
     e.preventDefault();
-    
     const name = document.getElementById('customerName').value.trim();
     const address = document.getElementById('customerAddress').value.trim();
     
@@ -437,7 +433,6 @@ function generateWhatsAppMessage() {
     const address = document.getElementById('customerAddress').value;
     const phone = document.getElementById('customerPhone').value;
     const isInternational = document.getElementById('internationalShipping').checked;
-    
     const { subtotal, shipping, total } = calculateTotals();
     
     let message = `*Nouvelle Commande - Coopérative Al Hikma*\n\n`;
@@ -464,177 +459,110 @@ function openWhatsAppDirect() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
 }
 
-// ==================== PDF CATALOGUE ====================
-// Version finale robuste – 2 colonnes, 10 produits/page, images avec fallback
+// PDF Catalogue Generation - 2 products per line, 10 products per page
 async function generatePDF() {
+    if (products.length === 0) {
+        alert('Aucun produit à afficher dans le catalogue');
+        return;
+    }
+    
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF();
     
-    // Couleurs
-    const terracotta = [211, 84, 0];
-    const deepGreen = [27, 67, 50];
-    const saffron = [243, 156, 18];
-    const lightGray = [245, 245, 245];
-    
-    // Dimensions et marges
-    const pageWidth = 210;
-    const marginX = 15;
-    const marginY = 20;
-    const columnGap = 10;
-    const cellWidth = (pageWidth - 2 * marginX - columnGap) / 2;
-    const imgWidth = cellWidth - 10;  // marge interne
-    const imgHeight = 60;             // hauteur image
-    const rowHeight = imgHeight + 40; // espace pour le texte sous l'image
-    
-    let currentPage = 1;
-    let yPos = marginY;
-    
-    // En-tête
-    function addHeader() {
-        doc.setFillColor(...terracotta);
-        doc.rect(0, 0, pageWidth, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Coopérative Al Hikma', pageWidth / 2, 20, { align: 'center' });
-        doc.setFontSize(12);
-        doc.text('Produits du Terroir Marocain', pageWidth / 2, 30, { align: 'center' });
-        doc.setDrawColor(...saffron);
-        doc.setLineWidth(1);
-        doc.line(marginX, 45, pageWidth - marginX, 45);
-        doc.setTextColor(100, 100, 100);
-        doc.setFontSize(9);
-        doc.text(`Catalogue généré le ${new Date().toLocaleDateString('fr-FR')}`, marginX, 53);
-        yPos = 65;
-    }
-    
-    // Pied de page
-    function addFooter() {
-        const pageHeight = doc.internal.pageSize.height;
-        doc.setFillColor(lightGray);
-        doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-        doc.setTextColor(...deepGreen);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Coopérative Al Hikma - Taliouine, Maroc', pageWidth / 2, pageHeight - 10, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.text(`WhatsApp: +${WHATSAPP_NUMBER} | contact@cooperative-alhikma.ma`, pageWidth / 2, pageHeight - 4, { align: 'center' });
-        doc.text(`Page ${currentPage}`, pageWidth - marginX, pageHeight - 4, { align: 'right' });
-    }
-    
-    // Charger une image en base64 avec fallback
-    async function loadImageAsDataURL(url) {
-        if (!url) return null;
+    // Helper to convert URL to Base64
+    const getBase64 = async (url) => {
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const blob = await response.blob();
+            const res = await fetch(cleanImageUrl(url));
+            const blob = await res.blob();
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result);
-                reader.onerror = () => resolve(null);
                 reader.readAsDataURL(blob);
             });
-        } catch (error) {
-            console.warn(`Impossible de charger l'image : ${url}`, error);
-            return null;
+        } catch (e) { 
+            return null; 
         }
+    };
+    
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 10;
+    const headerHeight = 30;
+    const footerHeight = 20;
+    const usableHeight = pageHeight - margin * 2 - headerHeight - footerHeight;
+    const itemsPerPage = 10;
+    const rowsPerPage = 5;
+    const rowHeight = usableHeight / rowsPerPage;
+    const colGap = 10;
+    const colWidth = (pageWidth - margin * 2 - colGap) / 2;
+    
+    // Process products in batches of 10
+    for (let i = 0; i < products.length; i += itemsPerPage) {
+        if (i > 0) doc.addPage();
+        
+        const pageProducts = products.slice(i, i + itemsPerPage);
+        
+        // Load images for this page
+        const images = await Promise.all(pageProducts.map(p => getBase64(p.image)));
+        
+        // Header
+        doc.setFillColor(211, 84, 0); // terracotta
+        doc.rect(0, 0, pageWidth, headerHeight, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Coopérative Al Hikma', pageWidth / 2, 15, { align: 'center' });
+        doc.setFontSize(10);
+        doc.text('Catalogue Produits du Terroir', pageWidth / 2, 25, { align: 'center' });
+        
+        // Products Grid (2 per line, 10 per page)
+        pageProducts.forEach((product, index) => {
+            const row = Math.floor(index / 2);
+            const col = index % 2;
+            const x = margin + (col * (colWidth + colGap));
+            const y = headerHeight + margin + (row * rowHeight);
+            
+            // Image Box
+            if (images[index]) {
+                try {
+                    doc.addImage(images[index], 'JPEG', x, y + 2, colWidth, rowHeight - 12);
+                } catch (e) {
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(x, y + 2, colWidth, rowHeight - 12, 'F');
+                }
+            } else {
+                doc.setFillColor(240, 240, 240);
+                doc.rect(x, y + 2, colWidth, rowHeight - 12, 'F');
+            }
+            
+            // Text Info
+            const textY = y + rowHeight - 8;
+            doc.setTextColor(27, 67, 50); // deep-green
+            
+            // Name
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            const nameLines = doc.splitTextToSize(product.name, colWidth);
+            doc.text(nameLines, x, textY);
+            
+            // Price & Weight
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            const infoY = textY + (nameLines.length * 3) + 1;
+            doc.text(`${product.price} DHS`, x, infoY);
+            doc.text(`${product.weight}`, x + colWidth, infoY, { align: 'right' });
+        });
+        
+        // Footer
+        doc.setFillColor(245, 247, 240);
+        doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+        doc.setTextColor(27, 67, 50);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Coopérative Al Hikma - Taliouine, Maroc', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Page ${Math.floor(i / itemsPerPage) + 1}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
     }
     
-    // Créer un placeholder (image grise)
-    function createPlaceholder() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 200;
-        canvas.height = 200;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#cccccc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#666666';
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Image', 70, 100);
-        return canvas.toDataURL();
-    }
-    
-    // Charger toutes les images (en parallèle, avec fallback)
-    const imagePromises = products.map(product => loadImageAsDataURL(cleanImageUrl(product.image)));
-    const results = await Promise.allSettled(imagePromises);
-    const productImages = results.map((result, idx) => {
-        if (result.status === 'fulfilled' && result.value) {
-            return result.value;
-        } else {
-            console.warn(`Image manquante pour ${products[idx].name}, utilisation d'un placeholder.`);
-            return createPlaceholder();
-        }
-    });
-    
-    // Démarrer le PDF
-    addHeader();
-    
-    // Parcourir les produits
-    for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        const imgData = productImages[i];
-        
-        const column = i % 2;                // 0 = gauche, 1 = droite
-        const row = Math.floor(i / 2) % 5;    // 0 à 4 (5 lignes max)
-        
-        // Nouvelle page nécessaire ?
-        if (row === 0 && i !== 0) {
-            addFooter();
-            doc.addPage();
-            currentPage++;
-            addHeader();
-        }
-        
-        const x = marginX + column * (cellWidth + columnGap);
-        const y = yPos + row * rowHeight;
-        
-        // Vérifier si on dépasse la page (sécurité)
-        if (y + rowHeight > doc.internal.pageSize.height - 25) {
-            addFooter();
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            // Recommencer avec la même ligne et colonne sur la nouvelle page
-            const newY = yPos;
-            const newX = marginX + column * (cellWidth + columnGap);
-            placeItem(doc, product, imgData, newX, newY, imgWidth, imgHeight);
-        } else {
-            placeItem(doc, product, imgData, x, y, imgWidth, imgHeight);
-        }
-    }
-    
-    // Dernier pied de page
-    addFooter();
-    
-    // Sauvegarde
     doc.save('catalogue-cooperative-alhikma.pdf');
-}
-
-// Fonction utilitaire pour placer un produit dans le PDF
-function placeItem(doc, product, imgData, x, y, imgWidth, imgHeight) {
-    // Ajouter l'image (avec fallback si format inconnu)
-    try {
-        doc.addImage(imgData, 'JPEG', x + 5, y, imgWidth, imgHeight, undefined, 'FAST');
-    } catch (e) {
-        try {
-            doc.addImage(imgData, 'PNG', x + 5, y, imgWidth, imgHeight);
-        } catch (err) {
-            console.warn('Erreur lors de l\'ajout de l\'image pour', product.name);
-        }
-    }
-    
-    // Nom du produit
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(211, 84, 0);
-    const nameY = y + imgHeight + 8;
-    doc.text(product.name, x + 5, nameY, { maxWidth: imgWidth });
-    
-    // Prix et poids
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(27, 67, 50);
-    const priceWeightY = nameY + 5;
-    doc.text(`${product.price} DHS • ${product.weight || 'N/A'}`, x + 5, priceWeightY);
 }
