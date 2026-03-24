@@ -464,7 +464,7 @@ function openWhatsAppDirect() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
 }
 
-// PDF Catalogue Generation (version avec images et grille 2 colonnes)
+// PDF Catalogue Generation (version corrigée et robuste)
 async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -482,37 +482,161 @@ async function generatePDF() {
     const columnGap = 10;
     const cellWidth = (pageWidth - 2 * marginX - columnGap) / 2;
     const imgWidth = cellWidth - 10; // marge interne
-    const imgHeight = 60; // hauteur fixe pour l'image
+    const imgHeight = 60;            // hauteur fixe pour l'image
+    const rowHeight = imgHeight + 40; // espace pour le texte sous l'image
     
     let currentPage = 1;
     let yPos = marginY;
     
-    // Fonction pour ajouter l'en-tête
+    // En-tête
     function addHeader() {
-        // Fond terracotta
         doc.setFillColor(...terracotta);
         doc.rect(0, 0, pageWidth, 40, 'F');
-        
-        // Titre
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
         doc.text('Coopérative Al Hikma', pageWidth / 2, 20, { align: 'center' });
         doc.setFontSize(12);
         doc.text('Produits du Terroir Marocain', pageWidth / 2, 30, { align: 'center' });
-        
-        // Ligne décorative
         doc.setDrawColor(...saffron);
         doc.setLineWidth(1);
         doc.line(marginX, 45, pageWidth - marginX, 45);
-        
-        // Date
         doc.setTextColor(100, 100, 100);
         doc.setFontSize(9);
         doc.text(`Catalogue généré le ${new Date().toLocaleDateString('fr-FR')}`, marginX, 53);
-        
         yPos = 65;
     }
+    
+    // Pied de page
+    function addFooter() {
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFillColor(lightGray);
+        doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+        doc.setTextColor(...deepGreen);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Coopérative Al Hikma - Taliouine, Maroc', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.text(`WhatsApp: +${WHATSAPP_NUMBER} | contact@cooperative-alhikma.ma`, pageWidth / 2, pageHeight - 4, { align: 'center' });
+        doc.text(`Page ${currentPage}`, pageWidth - marginX, pageHeight - 4, { align: 'right' });
+    }
+    
+    // Charger une image en base64 avec fallback
+    async function loadImageAsDataURL(url) {
+        if (!url) return null;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.warn(`Impossible de charger l'image : ${url}`, error);
+            return null;
+        }
+    }
+    
+    // Créer un placeholder (image grise)
+    function createPlaceholder() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#cccccc';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#666666';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Image', 70, 100);
+        return canvas.toDataURL();
+    }
+    
+    // Charger toutes les images (en parallèle, avec fallback)
+    const imagePromises = products.map(product => loadImageAsDataURL(cleanImageUrl(product.image)));
+    const results = await Promise.allSettled(imagePromises);
+    const productImages = results.map((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+            return result.value;
+        } else {
+            console.warn(`Image manquante pour ${products[idx].name}, utilisation d'un placeholder.`);
+            return createPlaceholder();
+        }
+    });
+    
+    // Démarrer le PDF
+    addHeader();
+    
+    // Parcourir les produits
+    for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        const imgData = productImages[i];
+        
+        const column = i % 2;                // 0 = gauche, 1 = droite
+        const row = Math.floor(i / 2) % 5;    // 0 à 4 (5 lignes max)
+        
+        // Nouvelle page nécessaire ?
+        if (row === 0 && i !== 0) {
+            addFooter();
+            doc.addPage();
+            currentPage++;
+            addHeader();
+        }
+        
+        const x = marginX + column * (cellWidth + columnGap);
+        const y = yPos + row * rowHeight;
+        
+        // Vérifier si on dépasse la page (sécurité)
+        if (y + rowHeight > doc.internal.pageSize.height - 25) {
+            addFooter();
+            doc.addPage();
+            currentPage++;
+            addHeader();
+            // Recommencer avec la même ligne et colonne sur la nouvelle page
+            const newY = yPos;
+            const newX = marginX + column * (cellWidth + columnGap);
+            placeItem(doc, product, imgData, newX, newY, imgWidth, imgHeight);
+        } else {
+            placeItem(doc, product, imgData, x, y, imgWidth, imgHeight);
+        }
+    }
+    
+    // Dernier pied de page
+    addFooter();
+    
+    // Sauvegarde
+    doc.save('catalogue-cooperative-alhikma.pdf');
+}
+
+// Fonction utilitaire pour placer un produit dans le PDF
+function placeItem(doc, product, imgData, x, y, imgWidth, imgHeight) {
+    // Ajouter l'image (avec fallback si format inconnu)
+    try {
+        doc.addImage(imgData, 'JPEG', x + 5, y, imgWidth, imgHeight, undefined, 'FAST');
+    } catch (e) {
+        try {
+            doc.addImage(imgData, 'PNG', x + 5, y, imgWidth, imgHeight);
+        } catch (err) {
+            console.warn('Erreur lors de l\'ajout de l\'image pour', product.name);
+        }
+    }
+    
+    // Nom du produit
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(211, 84, 0);
+    const nameY = y + imgHeight + 8;
+    doc.text(product.name, x + 5, nameY, { maxWidth: imgWidth });
+    
+    // Prix et poids
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(27, 67, 50);
+    const priceWeightY = nameY + 5;
+    doc.text(`${product.price} DHS • ${product.weight || 'N/A'}`, x + 5, priceWeightY);
+}
     
     // Fonction pour ajouter le pied de page
     function addFooter() {
