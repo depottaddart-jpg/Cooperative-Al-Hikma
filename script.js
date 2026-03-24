@@ -464,7 +464,8 @@ function openWhatsAppDirect() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
 }
 
-// PDF Catalogue Generation (version corrigée et robuste)
+// ==================== PDF CATALOGUE ====================
+// Version finale robuste – 2 colonnes, 10 produits/page, images avec fallback
 async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -481,8 +482,8 @@ async function generatePDF() {
     const marginY = 20;
     const columnGap = 10;
     const cellWidth = (pageWidth - 2 * marginX - columnGap) / 2;
-    const imgWidth = cellWidth - 10; // marge interne
-    const imgHeight = 60;            // hauteur fixe pour l'image
+    const imgWidth = cellWidth - 10;  // marge interne
+    const imgHeight = 60;             // hauteur image
     const rowHeight = imgHeight + 40; // espace pour le texte sous l'image
     
     let currentPage = 1;
@@ -634,124 +635,6 @@ function placeItem(doc, product, imgData, x, y, imgWidth, imgHeight) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(27, 67, 50);
-    const priceWeightY = nameY + 5;
-    doc.text(`${product.price} DHS • ${product.weight || 'N/A'}`, x + 5, priceWeightY);
-}
-    
-    // Fonction pour ajouter le pied de page
-    function addFooter() {
-        const pageHeight = doc.internal.pageSize.height;
-        doc.setFillColor(lightGray);
-        doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-        doc.setTextColor(...deepGreen);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Coopérative Al Hikma - Taliouine, Maroc', pageWidth / 2, pageHeight - 10, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.text(`WhatsApp: +${WHATSAPP_NUMBER} | contact@cooperative-alhikma.ma`, pageWidth / 2, pageHeight - 4, { align: 'center' });
-        doc.text(`Page ${currentPage}`, pageWidth - marginX, pageHeight - 4, { align: 'right' });
-    }
-    
-    // Charger toutes les images en base64 (asynchrone)
-    const productImages = await Promise.all(products.map(async (product) => {
-        const imageUrl = cleanImageUrl(product.image);
-        try {
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error('Image non trouvée');
-            const blob = await response.blob();
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(blob);
-            });
-        } catch (error) {
-            console.warn(`Impossible de charger l'image pour ${product.name}`, error);
-            // Retourner une image de remplacement (carré gris)
-            const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 200;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#cccccc';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#666666';
-            ctx.font = 'bold 16px Arial';
-            ctx.fillText('Image', 70, 100);
-            return canvas.toDataURL();
-        }
-    }));
-    
-    // Ajouter la première page avec en-tête
-    addHeader();
-    
-    // Parcourir les produits avec leur image chargée
-    for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        const imgData = productImages[i];
-        
-        // Déterminer la colonne (0 = gauche, 1 = droite)
-        const column = i % 2;
-        // Ligne = 0-indexée (5 lignes max par page)
-        const row = Math.floor(i / 2) % 5;
-        
-        // Si on commence une nouvelle page (row === 0 et i !== 0)
-        if (row === 0 && i !== 0) {
-            // Pied de page de la page actuelle
-            addFooter();
-            // Nouvelle page
-            doc.addPage();
-            currentPage++;
-            addHeader();
-        }
-        
-        // Calcul de la position X en fonction de la colonne
-        const x = marginX + column * (cellWidth + columnGap);
-        const y = yPos + row * (imgHeight + 40); // 40 = marge pour le texte
-        
-        // Vérifier si le contenu dépasse la page
-        if (y + imgHeight + 35 > doc.internal.pageSize.height - 25) {
-            // Pied de page et nouvelle page
-            addFooter();
-            doc.addPage();
-            currentPage++;
-            addHeader();
-            // Recalculer y (retour à la première ligne)
-            const newY = yPos;
-            const newX = marginX + column * (cellWidth + columnGap);
-            // Placer l'élément en haut de la nouvelle page
-            placeItem(doc, product, imgData, newX, newY, imgWidth, imgHeight);
-        } else {
-            placeItem(doc, product, imgData, x, y, imgWidth, imgHeight);
-        }
-    }
-    
-    // Pied de page de la dernière page
-    addFooter();
-    
-    // Sauvegarder le PDF
-    doc.save('catalogue-cooperative-alhikma.pdf');
-}
-
-// Fonction utilitaire pour placer un produit dans le PDF
-function placeItem(doc, product, imgData, x, y, imgWidth, imgHeight) {
-    // Image
-    try {
-        doc.addImage(imgData, 'JPEG', x + 5, y, imgWidth, imgHeight, undefined, 'FAST');
-    } catch (e) {
-        // Fallback si le format n'est pas JPEG
-        doc.addImage(imgData, 'PNG', x + 5, y, imgWidth, imgHeight);
-    }
-    
-    // Nom du produit
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(211, 84, 0); // terracotta
-    const nameY = y + imgHeight + 8;
-    doc.text(product.name, x + 5, nameY, { maxWidth: imgWidth });
-    
-    // Prix et poids
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(27, 67, 50); // deep-green
     const priceWeightY = nameY + 5;
     doc.text(`${product.price} DHS • ${product.weight || 'N/A'}`, x + 5, priceWeightY);
 }
