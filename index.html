@@ -1,0 +1,470 @@
+<!-- 
+SETUP INSTRUCTIONS:
+1. Save all 4 files (index.html, style.css, script.js, products.json) in the same folder
+2. Open index.html in any modern web browser
+3. No build process or server required - works entirely client-side
+4. Configure WhatsApp number in script.js (line 1)
+5. Test locally by opening the file directly or use Live Server extension
+6. For production: upload all files to any static web host (GitHub Pages, Netlify, Vercel, etc.)
+-->
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coopérative Al Hikma - Produits du Terroir Marocain</title>
+    <meta name="description" content="Coopérative artisanale marocaine spécialisée dans les produits du terroir: Amlou, Miel, Huile d'Argan, Safran, et Épices.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- jsPDF for PDF Catalogue -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-cream font-sans antialiased">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-terracotta z-50 flex items-center justify-center transition-opacity duration-500">
+        <div class="text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mb-4"></div>
+            <p class="text-xl font-serif">Chargement de la coopérative...</p>
+        </div>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <nav id="desktopNav" class="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-sm z-40 hidden md:block border-b-2 border-saffron/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-terracotta rounded-full flex items-center justify-center text-white">
+                        <i data-lucide="feather" class="w-6 h-6"></i>
+                    </div>
+                    <span class="font-serif text-2xl font-bold text-deep-green">Coopérative Al Hikma</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#home" class="nav-link text-gray-700 hover:text-terracotta transition-colors font-medium">Accueil</a>
+                    <a href="#produits" class="nav-link text-gray-700 hover:text-terracotta transition-colors font-medium">Produits</a>
+                    <a href="#livraison" class="nav-link text-gray-700 hover:text-terracotta transition-colors font-medium">Livraison</a>
+                    <a href="#about" class="nav-link text-gray-700 hover:text-terracotta transition-colors font-medium">Notre Histoire</a>
+                    <a href="#contact" class="nav-link text-gray-700 hover:text-terracotta transition-colors font-medium">Contact</a>
+                </div>
+                <button id="desktopCartBtn" class="relative p-2 text-gray-700 hover:text-terracotta transition-colors">
+                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                    <span id="cartBadge" class="absolute -top-1 -right-1 bg-terracotta text-white text-xs rounded-full h-5 w-5 flex items-center justify-center opacity-0 transition-opacity">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav id="mobileNav" class="fixed bottom-0 w-full bg-white border-t-2 border-saffron/30 z-40 md:hidden shadow-lg">
+        <div class="flex justify-around items-center h-16 pb-safe">
+            <a href="#home" class="mobile-nav-item flex flex-col items-center justify-center w-full h-full text-gray-500 active:text-terracotta">
+                <i data-lucide="home" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Accueil</span>
+            </a>
+            <a href="#produits" class="mobile-nav-item flex flex-col items-center justify-center w-full h-full text-gray-500 active:text-terracotta">
+                <i data-lucide="grid" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Produits</span>
+            </a>
+            <button id="mobileCartBtn" class="mobile-nav-item flex flex-col items-center justify-center w-full h-full text-gray-500 active:text-terracotta relative">
+                <i data-lucide="shopping-bag" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Panier</span>
+                <span id="mobileCartBadge" class="absolute top-1 right-1/4 bg-terracotta text-white text-xs rounded-full h-4 w-4 flex items-center justify-center opacity-0 transition-opacity text-[10px]">0</span>
+            </button>
+            <a href="#contact" class="mobile-nav-item flex flex-col items-center justify-center w-full h-full text-gray-500 active:text-terracotta">
+                <i data-lucide="phone" class="w-6 h-6 mb-1"></i>
+                <span class="text-xs">Contact</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Cart Sidebar -->
+    <div id="cartSidebar" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-6 bg-terracotta text-white flex justify-between items-center">
+            <h2 class="text-xl font-serif font-bold flex items-center gap-2">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                Votre Panier
+            </h2>
+            <button id="closeCart" class="hover:bg-white/20 rounded-full p-1 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div id="cartContent" class="flex-1 overflow-y-auto p-6">
+            <!-- Cart items injected here -->
+        </div>
+        
+        <div class="border-t border-gray-200 p-6 bg-cream/50">
+            <div class="space-y-3 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Sous-total</span>
+                    <span id="cartSubtotal" class="font-semibold">0 DHS</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Livraison</span>
+                    <span id="cartShipping" class="font-semibold text-deep-green">Calculée à l'étape suivante</span>
+                </div>
+                <div class="border-t border-gray-300 pt-3 flex justify-between items-center">
+                    <span class="text-lg font-bold text-deep-green">Total</span>
+                    <span id="cartTotal" class="text-xl font-bold text-terracotta">0 DHS</span>
+                </div>
+            </div>
+            
+            <button id="checkoutBtn" class="w-full bg-deep-green hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                Commander via WhatsApp
+            </button>
+            
+            <button id="downloadCatalogueBtn" class="w-full mt-3 border-2 border-terracotta text-terracotta hover:bg-terracotta hover:text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Télécharger le Catalogue PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- WhatsApp Order Modal -->
+    <div id="whatsappModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-4 border-saffron/30">
+            <div class="p-6 border-b border-gray-200 bg-cream/30">
+                <h3 class="text-xl font-serif font-bold text-deep-green flex items-center gap-2">
+                    <i data-lucide="message-circle" class="w-6 h-6 text-green-600"></i>
+                    Finaliser votre commande
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Remplissez vos coordonnées pour générer votre commande WhatsApp</p>
+            </div>
+            
+            <form id="orderForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+                    <input type="text" id="customerName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent outline-none transition-all" placeholder="Votre nom et prénom">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison complète *</label>
+                    <textarea id="customerAddress" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent outline-none transition-all resize-none" placeholder="Rue, quartier, ville, code postal..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone (optionnel)</label>
+                    <input type="tel" id="customerPhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-terracotta focus:border-transparent outline-none transition-all" placeholder="06 XX XX XX XX">
+                </div>
+                
+                <div class="bg-saffron/10 p-4 rounded-lg border border-saffron/30">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="internationalShipping" class="w-5 h-5 text-terracotta rounded focus:ring-terracotta border-gray-300">
+                        <div>
+                            <span class="font-medium text-deep-green block">Livraison internationale</span>
+                            <span class="text-xs text-gray-600">+250 DHS (Europe, Amériques, Asie)</span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span>Sous-total:</span>
+                        <span id="modalSubtotal">0 DHS</span>
+                    </div>
+                    <div class="flex justify-between text-deep-green font-medium">
+                        <span>Livraison:</span>
+                        <span id="modalShipping">Gratuite</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold text-terracotta border-t border-gray-300 pt-2 mt-2">
+                        <span>Total:</span>
+                        <span id="modalTotal">0 DHS</span>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button type="button" id="cancelOrder" class="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        Annuler
+                    </button>
+                    <button type="submit" class="flex-[2] bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors font-bold flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        Envoyer sur WhatsApp
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="md:pt-20 pb-20 md:pb-0">
+        
+        <!-- Hero Section -->
+        <section id="home" class="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-terracotta/20 via-cream to-deep-green/10"></div>
+            <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%239C92AC&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+            
+            <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="inline-block mb-6 p-4 rounded-full bg-white/80 backdrop-blur shadow-lg border-2 border-saffron/30 animate-float">
+                    <i data-lucide="sparkles" class="w-8 h-8 text-saffron"></i>
+                </div>
+                <h1 class="font-serif text-5xl md:text-7xl font-bold text-deep-green mb-6 leading-tight">
+                    L'Authenticité du<br>
+                    <span class="text-terracotta">Terroir Marocain</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-700 max-w-2xl mx-auto mb-10 font-light">
+                    Découvrez nos trésors artisanaux : Amlou, Huile d'Argan bio, Safran de Taliouine, et miel des montagnes de l'Atlas.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="#produits" class="bg-terracotta hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center gap-2">
+                        <i data-lucide="shopping-basket" class="w-5 h-5"></i>
+                        Découvrir nos produits
+                    </a>
+                    <button onclick="document.getElementById('downloadCatalogueBtn').click()" class="bg-white hover:bg-cream text-deep-green border-2 border-deep-green font-bold py-4 px-8 rounded-full transition-all flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
+                        Catalogue PDF
+                    </button>
+                </div>
+                
+                <!-- Decorative Elements -->
+                <div class="mt-16 flex justify-center gap-8 opacity-60">
+                    <div class="text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 bg-saffron/20 rounded-full flex items-center justify-center">
+                            <i data-lucide="leaf" class="w-8 h-8 text-deep-green"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-600">100% Naturel</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 bg-terracotta/20 rounded-full flex items-center justify-center">
+                            <i data-lucide="users" class="w-8 h-8 text-terracotta"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-600">Coopérative</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="truck" class="w-8 h-8 text-blue-600"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-600">Livraison Rapide</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="produits" class="py-20 bg-white relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <div class="inline-block p-3 bg-saffron/10 rounded-full mb-4">
+                        <i data-lucide="gem" class="w-6 h-6 text-saffron"></i>
+                    </div>
+                    <h2 class="font-serif text-4xl md:text-5xl font-bold text-deep-green mb-4">Nos Produits Artisanaux</h2>
+                    <div class="w-24 h-1 bg-terracotta mx-auto mb-4 rounded-full"></div>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Sélection rigoureuse des meilleurs produits du terroir marocain, élaborés selon les traditions ancestrales.</p>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap justify-center gap-3 mb-12" id="categoryFilters">
+                    <button class="filter-btn active px-6 py-2 rounded-full border-2 border-terracotta bg-terracotta text-white font-medium transition-all" data-category="all">Tous</button>
+                    <button class="filter-btn px-6 py-2 rounded-full border-2 border-gray-300 text-gray-600 hover:border-terracotta hover:text-terracotta font-medium transition-all" data-category="Huiles">Huiles</button>
+                    <button class="filter-btn px-6 py-2 rounded-full border-2 border-gray-300 text-gray-600 hover:border-terracotta hover:text-terracotta font-medium transition-all" data-category="Tisanes">Tisanes</button>
+                    <button class="filter-btn px-6 py-2 rounded-full border-2 border-gray-300 text-gray-600 hover:border-terracotta hover:text-terracotta font-medium transition-all" data-category="Miels">Miels</button>
+                    <button class="filter-btn px-6 py-2 rounded-full border-2 border-gray-300 text-gray-600 hover:border-terracotta hover:text-terracotta font-medium transition-all" data-category="Graines">Graines</button>
+                    <button class="filter-btn px-6 py-2 rounded-full border-2 border-gray-300 text-gray-600 hover:border-terracotta hover:text-terracotta font-medium transition-all" data-category="Épices & Aromates">Épices & Aromates</button>
+                </div>
+
+                <!-- Products Grid -->
+                <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Products injected via JS -->
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
+                        <i data-lucide="loader-2" class="w-12 h-12 animate-spin mb-4"></i>
+                        <p>Chargement des produits...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Shipping Section -->
+        <section id="livraison" class="py-20 bg-cream relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-terracotta via-saffron to-deep-green"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-serif text-4xl md:text-5xl font-bold text-deep-green mb-4">Livraison & Expédition</h2>
+                    <div class="w-24 h-1 bg-terracotta mx-auto mb-4 rounded-full"></div>
+                    <p class="text-gray-600">Des tarifs adaptés pour une livraison sécurisée de nos produits fragiles</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-green-500 transform hover:-translate-y-2 transition-transform">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                            <i data-lucide="truck" class="w-8 h-8 text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-deep-green mb-3">Livraison Gratuite</h3>
+                        <p class="text-gray-600 mb-4">Pour toute commande supérieure à 499 DHS au Maroc.</p>
+                        <div class="text-3xl font-bold text-green-600">0 DHS</div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-terracotta transform hover:-translate-y-2 transition-transform">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-6">
+                            <i data-lucide="package" class="w-8 h-8 text-terracotta"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-deep-green mb-3">Standard Maroc</h3>
+                        <p class="text-gray-600 mb-4">Pour les commandes inférieures à 499 DHS. Livraison 2-4 jours.</p>
+                        <div class="text-3xl font-bold text-terracotta">25 DHS</div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-blue-500 transform hover:-translate-y-2 transition-transform">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                            <i data-lucide="globe" class="w-8 h-8 text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-deep-green mb-3">International</h3>
+                        <p class="text-gray-600 mb-4">Expédition vers l'Europe, Amériques et Asie. 5-10 jours.</p>
+                        <div class="text-3xl font-bold text-blue-600">250 DHS</div>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white rounded-2xl p-8 shadow-lg">
+                    <h3 class="text-2xl font-serif font-bold text-deep-green mb-6 flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-saffron"></i>
+                        Conditions de Livraison
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-6 text-gray-700">
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Emballage soigné et éco-responsable spécifique aux produits fragiles</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Envoi sous 24-48h après confirmation de commande</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Paiement à la livraison disponible au Maroc</span>
+                            </li>
+                        </ul>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Numéro de suivi fourni pour toute expédition internationale</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Garantie satisfaction ou remboursement sous 14 jours</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Service client disponible 7j/7 par WhatsApp</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-terracotta/20 rounded-2xl transform rotate-3"></div>
+                        <div class="absolute -inset-4 bg-saffron/20 rounded-2xl transform -rotate-3"></div>
+                        <img src="https://static.photos/morocco/640x360/123" alt="Coopérative artisanale marocaine" class="relative rounded-2xl shadow-2xl w-full h-96 object-cover">
+                        <div class="absolute -bottom-6 -right-6 bg-white p-4 rounded-xl shadow-lg border-2 border-saffron/30">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-terracotta">15+</div>
+                                <div class="text-sm text-gray-600">Années d'expérience</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="inline-block p-3 bg-deep-green/10 rounded-full mb-4">
+                            <i data-lucide="heart-handshake" class="w-6 h-6 text-deep-green"></i>
+                        </div>
+                        <h2 class="font-serif text-4xl font-bold text-deep-green mb-6">Notre Coopérative</h2>
+                        <div class="w-20 h-1 bg-terracotta mb-6 rounded-full"></div>
+                        <p class="text-gray-700 mb-6 leading-relaxed">
+                            Fondée en 2009 dans le village de Taliouine, au cœur du Souss marocain, notre coopérative rassemble plus de 30 femmes artisanes passionnées par la préservation du patrimoine culinaire amazigh.
+                        </p>
+                        <p class="text-gray-700 mb-6 leading-relaxed">
+                            Nous cultivons nos arganiers selon des méthodes ancestrales, récoltons le safran de manière artisanale, et pressons nos huiles à froid pour préserver leurs bienfaits. Chaque produit est le fruit d'un savoir-faire transmis de génération en génération.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mt-8">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-terracotta/10 rounded-full flex items-center justify-center">
+                                    <i data-lucide="award" class="w-6 h-6 text-terracotta"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-deep-green">Certifié Bio</div>
+                                    <div class="text-sm text-gray-500">ECOCERT Maroc</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-saffron/10 rounded-full flex items-center justify-center">
+                                    <i data-lucide="users-round" class="w-6 h-6 text-saffron"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-deep-green">Équité</div>
+                                    <div class="text-sm text-gray-500">Commerce équitable</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20 bg-deep-green text-white relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;100&quot; height=&quot;100&quot; viewBox=&quot;0 0 100 100&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cpath d=&quot;M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z&quot; fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot; fill-rule=&quot;evenodd&quot;/%3E%3C/svg%3E');"></div>
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="text-center mb-16">
+                    <h2 class="font-serif text-4xl md:text-5xl font-bold mb-4">Contactez-nous</h2>
+                    <p class="text-white/80 max-w-2xl mx-auto">Disponibles 7j/7 pour répondre à vos questions et prendre vos commandes personnalisées.</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                    <a href="#" onclick="openWhatsAppDirect(); return false;" class="bg-white/10 backdrop-blur-sm p-8 rounded-2xl text-center hover:bg-white/20 transition-all group">
+                        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="message-circle" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">WhatsApp</h3>
+                        <p class="text-white/70 text-sm">Réponse rapide garantie</p>
+                    </a>
+
+                    <a href="mailto:contact@cooperative-alhikma.ma" class="bg-white/10 backdrop-blur-sm p-8 rounded-2xl text-center hover:bg-white/20 transition-all group">
+                        <div class="w-16 h-16 bg-terracotta rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="mail" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Email</h3>
+                        <p class="text-white/70 text-sm">contact@cooperative-alhikma.ma</p>
+                    </a>
+
+                    <div class="bg-white/10 backdrop-blur-sm p-8 rounded-2xl text-center">
+                        <div class="w-16 h-16 bg-saffron rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="map-pin" class="w-8 h-8 text-deep-green"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Adresse</h3>
+                        <p class="text-white/70 text-sm">Taliouine, Province de Taroudant<br>Maroc</p>
+                    </div>
+                </div>
+
+                <div class="mt-16 text-center">
+                    <p class="text-white/60 text-sm">© 2024 Coopérative Al Hikma. Tous droits réservés.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Overlay for cart -->
+    <div id="cartOverlay" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm transition-opacity"></div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+<script src="https://deepsite.hf.co/deepsite-badge.js"></script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/* Custom CSS for Cooperative Al Hikma */
+
+:root {
+    --terracotta: #D35400;
+    --saffron: #F39C12;
+    --deep-green: #1B4332;
+    --cream: #F9F7F0;
+    --warm-beige: #E8DCC4;
+}
+
+/* Tailwind Configuration */
+@layer base {
+    body {
+        font-family: 'Lato', sans-serif;
+    }
+    h1, h2, h3, .font-serif {
+        font-family: 'Amiri', serif;
+    }
+}
+
+/* Custom Colors for Tailwind */
+.bg-terracotta { background-color: var(--terracotta); }
+.text-terracotta { color: var(--terracotta); }
+.border-terracotta { border-color: var(--terracotta); }
+.hover\:bg-terracotta:hover { background-color: var(--terracotta); }
+.hover\:text-terracotta:hover { color: var(--terracotta); }
+.hover\:border-terracotta:hover { border-color: var(--terracotta); }
+
+.bg-saffron { background-color: var(--saffron); }
+.text-saffron { color: var(--saffron); }
+.border-saffron { border-color: var(--saffron); }
+.bg-saffron\/10 { background-color: rgba(243, 156, 18, 0.1); }
+.bg-saffron\/20 { background-color: rgba(243, 156, 18, 0.2); }
+.bg-saffron\/30 { background-color: rgba(243, 156, 18, 0.3); }
+
+.bg-deep-green { background-color: var(--deep-green); }
+.text-deep-green { color: var(--deep-green); }
+.border-deep-green { border-color: var(--deep-green); }
+.hover\:bg-deep-green:hover { background-color: var(--deep-green); }
+
+.bg-cream { background-color: var(--cream); }
+.text-cream { color: var(--cream); }
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Geometric Pattern Decorations */
+.geometric-border {
+    position: relative;
+}
+
+.geometric-border::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' viewBox='0 0 40 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 L20 0 L40 20' fill='none' stroke='%23D35400' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+}
+
+/* Product Card Hover Effects */
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--terracotta);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #B44100;
+}
+
+/* Mobile Safe Area */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Loading Skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Cart Item Animation */
+.cart-item {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Button Press Effect */
+button:active {
+    transform: scale(0.98);
+}
+
+/* Form Focus States */
+input:focus, textarea:focus {
+    box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+}
+
+/* Mobile Navigation Active State */
+.mobile-nav-item.active {
+    color: var(--terracotta);
+}
+
+.mobile-nav-item.active svg {
+    stroke-width: 2.5;
+}
+
+/* Decorative Amazigh Pattern */
+.amazigh-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D35400' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Print Styles for PDF */
+@media print {
+    body { background: white; }
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Selection Color */
+::selection {
+    background-color: var(--saffron);
+    color: white;
+}
