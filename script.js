@@ -464,14 +464,14 @@ function openWhatsAppDirect() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
 }
 
-// PDF Catalogue Generation (Mise à jour avec Images et Grille 2 colonnes)
+// PDF Catalogue Generation (Mise à jour avec Conversion WEBP -> JPEG et Proxy CORS)
 async function generatePDF() {
     // UI Feedback : Indiquer le chargement sur le bouton
     const btn = document.getElementById('downloadCatalogueBtn');
     let originalText = '';
     if (btn) {
         originalText = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Création du PDF...';
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Création du PDF (Images en cours...)';
         btn.disabled = true;
         lucide.createIcons();
     }
@@ -521,24 +521,47 @@ async function generatePDF() {
             doc.text(`WhatsApp: +${WHATSAPP_NUMBER} | Email: contact@cooperative-alhikma.ma`, 105, 288, { align: 'center' });
         };
 
-        // Fonction pour charger une image en Base64 (nécessaire pour jsPDF)
+        // NOUVELLE FONCTION DE CHARGEMENT D'IMAGE (Gère le WEBP et le blocage CORS)
         const loadImageBase64 = (url) => {
             return new Promise((resolve) => {
                 const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.onload = () => {
+                img.crossOrigin = 'Anonymous'; // Demande l'autorisation CORS
+                
+                const processImage = (imageElement) => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    canvas.width = imageElement.width;
+                    canvas.height = imageElement.height;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+                    
+                    // Fond blanc pour les images transparentes
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.drawImage(imageElement, 0, 0);
                     try {
-                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                        // Conversion automatique du WEBP vers JPEG
+                        resolve(canvas.toDataURL('image/jpeg', 0.85));
                     } catch (e) {
-                        resolve(null); // Fallback en cas d'erreur de sécurité CORS
+                        resolve(null);
                     }
                 };
-                img.onerror = () => resolve(null);
+
+                img.onload = () => processImage(img);
+                
+                img.onerror = () => {
+                    // Si le chargement direct échoue à cause du CORS (Blogger), on utilise un proxy public
+                    if (!url.includes('api.allorigins.win')) {
+                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                        const proxyImg = new Image();
+                        proxyImg.crossOrigin = 'Anonymous';
+                        proxyImg.onload = () => processImage(proxyImg);
+                        proxyImg.onerror = () => resolve(null); // Si le proxy échoue aussi, on abandonne
+                        proxyImg.src = proxyUrl;
+                    } else {
+                        resolve(null);
+                    }
+                };
+                
                 img.src = url;
             });
         };
@@ -549,35 +572,33 @@ async function generatePDF() {
         const startY = 65;
         const startX = 20;
         const rowHeight = 40;
-        const colWidth = 82; // Largeur d'une colonne
-        const gutterX = 6;   // Espace entre les colonnes
+        const colWidth = 82;
+        const gutterX = 6;
         const itemsPerPage = 10;
         
         for (let i = 0; i < products.length; i++) {
             const product = products[i];
             
-            // Nouvelle page tous les 10 produits
             if (i > 0 && i % itemsPerPage === 0) {
                 drawFooter();
                 doc.addPage();
                 drawHeader();
             }
             
-            // Calcul de la position X et Y
-            const colIndex = i % 2; // 0 (gauche) ou 1 (droite)
-            const rowIndex = Math.floor((i % itemsPerPage) / 2); // 0 à 4
+            const colIndex = i % 2;
+            const rowIndex = Math.floor((i % itemsPerPage) / 2);
             
             const currentX = startX + colIndex * (colWidth + gutterX);
             const currentY = startY + rowIndex * rowHeight;
             
-            // Dessiner l'image
+            // Récupération de l'image (convertie en Base64 JPEG)
             const imgData = await loadImageBase64(cleanImageUrl(product.image));
             const imgSize = 30; // 30x30 mm
             
             if (imgData) {
+                // On s'assure de déclarer l'image comme JPEG
                 doc.addImage(imgData, 'JPEG', currentX, currentY, imgSize, imgSize);
             } else {
-                // Zone de remplacement si l'image ne charge pas
                 doc.setFillColor(235, 235, 235);
                 doc.rect(currentX, currentY, imgSize, imgSize, 'F');
                 doc.setTextColor(150, 150, 150);
@@ -585,11 +606,10 @@ async function generatePDF() {
                 doc.text('Image', currentX + 15, currentY + 15, { align: 'center' });
             }
             
-            // Textes à côté de l'image
             const textX = currentX + imgSize + 4;
             let textY = currentY + 6;
             
-            // Nom du produit
+            // Textes
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
             doc.setTextColor(...terracotta);
@@ -597,31 +617,25 @@ async function generatePDF() {
             doc.text(nameLines, textX, textY);
             textY += (nameLines.length * 5);
             
-            // Poids
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
             doc.setTextColor(100, 100, 100);
             doc.text(`Poids: ${product.weight || 'N/A'}`, textX, textY);
             textY += 6;
             
-            // Prix
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
             doc.setTextColor(...deepGreen);
             doc.text(`${product.price} DHS`, textX, textY);
         }
         
-        // Ajouter le pied de page sur la toute dernière page
         drawFooter();
-        
-        // Sauvegarder le fichier
         doc.save('catalogue-cooperative-alhikma.pdf');
         
     } catch (error) {
         console.error('Erreur lors de la génération du PDF:', error);
         alert("Une erreur s'est produite lors de la création du catalogue.");
     } finally {
-        // Restaurer le bouton à son état initial
         if (btn) {
             btn.innerHTML = originalText;
             btn.disabled = false;
