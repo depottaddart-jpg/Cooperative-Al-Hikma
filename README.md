@@ -61,10 +61,10 @@ Pas de serveur, pas de build.
 
 ## 📄 Licence
 
-Ce projet est sous licence MIT – libre d’utilisation et de modification.
+Ce projet est sous licence  – interdit d’utilisation et de modification.
 
 ## 👥 Auteur
 
 Coopérative Al Hikma – Taliouine, Maroc  
-Contact : `contact@cooperative-alhikma.ma`  
+Contact : `hicham.gr90@gmail.com`  
 WhatsApp : à configurer dans `script.js`
